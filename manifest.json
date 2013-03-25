@@ -1,0 +1,35 @@
+{
+	"manifest_version": 2,
+  
+	"name": "Remembr.",
+	"version": "1.0",
+
+	"description": "__MSG_extDescription__",
+
+	"icons": {	"16": "icon16.png",
+				"48": "icon48.png",
+				"128": "icon128.png" },
+	"default_locale": "en",
+
+	"permissions": [
+		"http://www.tumblr.com/dashboard"
+	],
+
+	"content_scripts": [
+		{
+			"matches": ["http://www.tumblr.com/dashboard"],
+			"css": ["core/inject/css/style.css"],
+			"run_at": "document_start"
+		},
+		{
+			"matches": ["http://www.tumblr.com/dashboard"],
+			"js": ["contentScript.js"]
+		}
+	],
+  
+	"web_accessible_resources": [
+		"core/img/*",
+		"core/inject/*",
+		"browser/js/storage.js"
+	]
+}

@@ -1,0 +1,88 @@
+/**
+ * General CSS
+ */
+@import "prefixer.less";
+
+#inception-alert {
+    position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	padding:  10px;
+	
+	text-align: center;
+	font-size:  18px;
+	color: #474747;
+    z-index: 9999;
+	
+	background-color: #fff;
+	-webkit-box-shadow: 0px 10px 8px rgba(50, 50, 50, 0.77);
+	-moz-box-shadow:    0px 10px 8px rgba(50, 50, 50, 0.77);
+	box-shadow:         0px 10px 8px rgba(50, 50, 50, 0.77);
+	
+	.error {
+		color: #d86043;
+	}
+	
+	a:link {
+		color: #4ea8d7;
+		text-decoration:none;
+	}
+	a:visited {
+		color: #4ea8d7;
+		text-decoration:none;
+	}
+	a:hover {
+		color: darken(#4ea8d7, 30%);
+		text-decoration:none;
+	}
+	a:active {
+		color: darken(#4ea8d7, 30%);
+		text-decoration:none;
+	}
+}
+
+.remembr-container {
+    position: absolute;
+    top: 29px;
+    left: -134px;
+    
+    width: 130px;
+    height: 130px;
+    
+    .remembr-text {
+        position: absolute;
+        top: 42px;
+        left: 22px;
+        
+        background-image: url('chrome-extension://__MSG_@@extension_id__/core/img/remembr.png');
+        width: 78px;
+        height: 36px;
+        
+        z-index:1;
+        cursor: pointer;
+    }
+    
+    .remembr-arrow {
+        position: absolute;
+        background-image: url('chrome-extension://__MSG_@@extension_id__/core/img/remembr-arrow.png');
+        width: 120px;
+        height: 120px;
+        
+        -webkit-transition-property: -webkit-transform;
+        .transition-duration(1s);
+        
+        &.remembr-searching {
+            -webkit-animation-name: rotate360ccw; 
+            -webkit-animation-duration: 1s; 
+            -webkit-animation-iteration-count: infinite;
+            -webkit-animation-timing-function: linear;
+        }
+    }
+    
+    @-webkit-keyframes rotate360ccw {
+        0% {-webkit-transform: rotate(0deg);}
+        50% {-webkit-transform: rotate(-180deg);}
+        100% {-webkit-transform: rotate(-360deg);}
+    }
+}
