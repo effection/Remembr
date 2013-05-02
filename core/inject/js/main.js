@@ -13,7 +13,7 @@ require.config({
 	}
 });
 
-require(['logger', 'modules/settings', 'modules/injector', 'modules/extender'], function(Logger, Settings, Injector, Extender) {
+require(['logger', 'modules/injector', 'modules/extender'], function(Logger, Injector, Extender) {
 	Logger.useDefaults();
 	Logger.info('Remembr loading');
 

@@ -17,7 +17,7 @@ define([], function() {
 	}
 
 	/**
-	 * Custom AutoPaginator - slightlyyyyy modified version of Tumblr's! 
+	 * Custom AutoPaginator - slightlyyyyy modified version of Tumblr's! This is what needs to be kept up to date after tumblr changes! 
 	 * 
 	 * exports should be an empty object so the paginator isn't a static global instance
 	 */
@@ -204,20 +204,32 @@ define([], function() {
 		 * Unimportant
 		 */
 		function track() {
-			next_page = next_page.replace(/https?:\/\/.*?\//, '/');
-			if (next_page.indexOf('/dashboard') === 0) {
-				next_page = next_page.substring(0, next_page.lastIndexOf('/'))
+			next_page = next_page.replace(/https?:\/\/.*?\//, "/");
+			if (next_page.indexOf("/dashboard") === 0) {
+				next_page = next_page.substring(0, next_page.lastIndexOf("/"))
 			}
 			if (window._gaq !== undefined) {
-				var tracking_url = tumblr_custom_tracking_url ? tumblr_custom_tracking_url : next_page;
-				_gaq.push(['_trackPageview', tracking_url])
+				try {
+					var o = tumblr_custom_tracking_url ? tumblr_custom_tracking_url : next_page;
+					_gaq.push(["_trackPageview", o])
+				} catch (p) {
+					Tumblr.Capture.Exceptions.add(p)
+				}
 			}
 			if (window.__qc) {
-				__qc.qpixelsent = [];
-				__qc.firepixel({qacct: "p-19UtqE8ngoZbM"})
+				try {
+					__qc.qpixelsent = [];
+					_qevents.push({qacct: "p-19UtqE8ngoZbM"})
+				} catch (p) {
+					Tumblr.Capture.Exceptions.add(p)
+				}
 			}
-			if (typeof (COMSCORE) !== 'undefined') {
-				COMSCORE.beacon({c1: "2",c2: "15742520"})
+			if (typeof (COMSCORE) !== "undefined") {
+				try {
+					COMSCORE.beacon({c1: "2",c2: "15742520"})
+				} catch (p) {
+					Tumblr.Capture.Exceptions.add(p)
+				}
 			}
 		}
 

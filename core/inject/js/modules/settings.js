@@ -5,7 +5,7 @@ define(['storage'], function(Storage) {
 		all: all
 	};
 
-	var prexifx = "inception-";
+	var prexifx = "remembr-";
 	var cache = {};
 
 	function get(key, useCache) {
@@ -18,7 +18,7 @@ define(['storage'], function(Storage) {
 	}
 
 	function set(key, val) {
-		cahce[key] = Storage.set(prexifx + key, val);
+		cache[key] = Storage.set(prexifx + key, val);
 	}
 
 	function all() {
@@ -34,18 +34,18 @@ define(['storage'], function(Storage) {
 
 	function init() {
 		defaults();
-		if(!get('defaultsSet')) {
+		if(!get('defaults-set')) {
 			defaults();
 		}
 	}
 
 	function defaults() {
 
-		set('rememberScroll', {
+		set('remembr-scroll', {
 			enabled: true
 		});
 
-		set('defaultsSet', true);
+		set('defaults-set', true);
 	}
 
 	init();

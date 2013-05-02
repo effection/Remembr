@@ -10,15 +10,12 @@
  *			end-search			{success}
  */
 
-define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils', 'modules/settings'], function(Logger, $, _, EventEmitter, Utils, Settings) {
-	var DEBUG_DONT_NAVIGATE_AWAY = false;
+define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils'], function(Logger, $, _, EventEmitter, Utils) {
 	var FIND_EXACT_POST_RETRY_COUNT = 8;
 	var Container = (function() {
 		var selector;
 		var $scrollContainer;
 		var pager;
-		
-		var currentPage = {};
 
 		//States
 		var state = {
@@ -48,25 +45,25 @@ define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils', 'modules/
 			pager = containerPager;
 
 			//Bind private functions that need this.
-			onLeavingPage = _.bind(onLeavingPage, this);//Needs this.save()
 			pageLoaded = _.bind(pageLoaded, this);//Needed for trigger()
 			searchForPost = _.bind(searchForPost, this);//Needed for trigger()
-			startNarrowingDownSearch = _.bind(startNarrowingDownSearch, this);//Needed for trigger();
+			startNarrowingDownSearch = _.bind(startNarrowingDownSearch, this);//Needed for trigger(); this.currentPage
 			binarySearchForTimestamp = _.bind(binarySearchForTimestamp, this);//Needed for trigger();
+			getPagesUntilPastTimestamp = _.bind(getPagesUntilPastTimestamp, this);//Needed for this.currentPage
 		}
 
 		_.extend(RememberScroll.prototype, EventEmitter);
 
 		/**
-		 * Hook events and load settings.
+		 * Hook events.
 		 */
 		RememberScroll.prototype.init = function() {
 			//Hook window leave and page load events
 			pager.on('after', pageLoaded);
 
 			//Get the current page.
-			currentPage = decodePageNumber(pager.getNextPageUrl());
-			currentPage.pageNumber--;
+			this.currentPage = decodePageNumber(pager.getNextPageUrl());
+			this.currentPage.pageNumber--;
 		}
 
 		/**
@@ -74,20 +71,15 @@ define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils', 'modules/
 		 */
 		RememberScroll.prototype.destroy = function() {
 			pager.off('after', pageLoaded);
-			$(window).off('beforeunload', onLeavingPage);
-		}
-
-		/**
-		 * Can go to saved post.
-		 */
-		RememberScroll.prototype.canResume = function() {
-			return (savedPost && savedPost.posts && savedPost.posts.length > 0 && savedPost.pageNumber >= 0 && savedPost.timestamp > 0);
 		}
 
 		/**
 		 * Start looking for posts
 		 */
-		RememberScroll.prototype.startSearch = function() {
+		RememberScroll.prototype.startSearchFor = function(posts) {
+
+			postsToSearchFor = posts;
+
 			state.nearestPageFound = false;
 			state.narrowingSearch = false;
 			state.tryToGoToExactPostRetries = FIND_EXACT_POST_RETRY_COUNT;
@@ -105,7 +97,7 @@ define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils', 'modules/
 					var lastPostTimestamp = getTimestampForPost($lastPost);
 
 					//Is last post older than the saved post
-					if(lastPostTimestamp <= savedPost.timestamp) {
+					if(lastPostTimestamp <= postsToSearchFor.timestamp) {
 						//posts already loaded
 						state.isSearchingForPost = true;
 						state.narrowingSearch = true;
@@ -120,69 +112,18 @@ define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils', 'modules/
 			state.onFailStartFullSearch = false;
 
 			//Set the page to begin a little before the saved page number
-			pager.setNextPageToLoad(nextPageUrl((savedPost.pageNumber > 5 ? savedPost.pageNumber - 5 : 1)), function() {
+			pager.setNextPageToLoad(nextPageUrl((postsToSearchFor.pageNumber > 5 ? postsToSearchFor.pageNumber - 5 : 1)), function() {
 				state.isSearchingForPost = true;
 				pager.loadNextPage(false);
 			});
 		}
 
 		/**
-		 * Save the post ids in view and the timestamp when navigating away.
-		 */
-		function onLeavingPage() {
-			//Find elementFromPoint coords for left_column posts
-			var $el = $(selector);
-			var offset = $el.offset();
-			var width = $el.width();
-			var height = $el.height();
-			//Middle of left posts
-			var x = offset.left + width / 2;
-			//Several y positions to cover all posts
-			var posts = [];
-			for(var i = 10; i < height; i += 20) {
-				var y = offset.top + i;
-				var $elm = $(document.elementFromPoint(x, y));
-				var $post = $elm.closest('.post');
-
-				if($post.attr('id') === 'new_post') {
-					break;
-				}
-
-				if($post.length > 0) {
-					Logger.debug('Found post to save', $post);
-					
-					posts.push($post);
-					savedPost.posts.length = 0;
-					savedPost.posts.push($post.attr('data-post-id'));
-					break;
-				}
-			}
-			if(posts.length > 0){
-
-				var postTimestamp = getTimestampForPost(posts[0]);
-				for(var i = 0; i < 2; i++) {
-					var nextPost = posts[i].next('.post');
-					if(nextPost.length > 0) {
-						posts.push(nextPost);
-						savedPost.posts.push(posts[i + 1].attr('data-post-id'));
-					} else break;
-				}
-				//Doesn't have to be accurate we'll be starting search a page or 2 before the saved page in case posts were deleted
-				savedPost.pageNumber = (currentPage.pageNumber > 2 ? currentPage.pageNumber - 2 : 1);
-				savedPost.timestamp = postTimestamp;
-				this.save();
-			}
-
-			if(DEBUG_DONT_NAVIGATE_AWAY)
-				return "Debug";
-		}
-
-		/**
 		 * After page loaded.
 		 */
 		function pageLoaded(nextPage, newPosts) {
-			currentPage = decodePageNumber(nextPage);
-			currentPage.pageNumber--;
+			this.currentPage = decodePageNumber(nextPage);
+			this.currentPage.pageNumber--;
 
 			if(state.isSearchingForPost) {
 
@@ -217,7 +158,7 @@ define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils', 'modules/
 					//Check current timestamp against target and skip ahead by X pages if we're not there yet
 					if(getPagesUntilPastTimestamp(newPostTimestamp, skipBy)) {
 						//Gone past timestamp
-						startNarrowingDownSearch(currentPage.pageNumber - skipBy.count);
+						startNarrowingDownSearch(this.currentPage.pageNumber - skipBy.count);
 					}
 				}
 			}
@@ -244,10 +185,10 @@ define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils', 'modules/
 					state.isSearchingForPost = false;
 
 					if(state.onFailStartFullSearch) {
-						this.startSearch();
+						this.startSearchFor();
 					}
 				} else {
-					pager.setNextPageToLoad(nextPageUrl(currentPage.pageNumber + 1), function() {
+					pager.setNextPageToLoad(nextPageUrl(this.currentPage.pageNumber + 1), function() {
 						pager.loadNextPage(true);
 					});
 				}
@@ -258,10 +199,10 @@ define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils', 'modules/
 		 * Keep loading pages until we are past the target timestamp, exponentially skipping
 		 */
 		function getPagesUntilPastTimestamp(currentPageTimestamp, skipBy) {
-			if(currentPageTimestamp > savedPost.timestamp) {
+			if(currentPageTimestamp > postsToSearchFor.timestamp) {
 				//Skip ahead by X number of pages
 				skipBy.count *= 2;
-				pager.setNextPageToLoad(nextPageUrl(currentPage.pageNumber + skipBy.count), function() {
+				pager.setNextPageToLoad(nextPageUrl(this.currentPage.pageNumber + skipBy.count), function() {
 					pager.loadNextPage(false);
 				});
 				return false;
@@ -279,10 +220,10 @@ define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils', 'modules/
 			state.narrowingSearch = true;
 
 			//Emit event for UI updating
-			this.trigger('narrowing-search', {between: {start: previousCurrentPage, end: currentPage.pageNumber}});
+			this.trigger('narrowing-search', {between: {start: previousCurrentPage, end: this.currentPage.pageNumber}});
 
 			binarySearch.start = new Date().getTime();
-			binarySearchForTimestamp(savedPost.timestamp, previousCurrentPage, currentPage.pageNumber);
+			binarySearchForTimestamp(postsToSearchFor.timestamp, previousCurrentPage, this.currentPage.pageNumber);
 		}
 
 		/**
@@ -345,8 +286,8 @@ define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils', 'modules/
 		 */
 		function tryToGoToExactPost() {
 			var $container = $(selector);
-			for(var i = 0; i < savedPost.posts.length; i++) {
-				var $post = $('li[data-post-id="' + savedPost.posts[i] + '"]', $container);
+			for(var i = 0; i < postsToSearchFor.posts.length; i++) {
+				var $post = $('li[data-post-id="' + postsToSearchFor.posts[i] + '"]', $container);
 				if($post.length > 0) {
 
 					$scrollContainer.animate({
@@ -377,7 +318,7 @@ define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils', 'modules/
 		}
 
 		/**
-		 * Turn /dashboard/2/6548899987 into base u	rl /dashboard/ and page number 2
+		 * Turn /dashboard/2/6548899987 into base url /dashboard/ and page number 2
 		 */
 		function decodePageNumber(pageUrl) {
 			var regx = /(\/[a-zA-Z0-9_]+\/)([0-9]+)\/*/;/*Fix for WebMatrix incorrect highlighting*/

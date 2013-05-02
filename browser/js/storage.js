@@ -27,7 +27,7 @@ define([], function() {
 	function set(key, value) {
 		var obj = JSON.stringify(value);
 		storage.setItem(key, obj);
-		return obj;
+		return value;
 	}
 
 	function key(i) {
