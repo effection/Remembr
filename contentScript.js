@@ -12,5 +12,21 @@ function injectRequireJs(url, main, load) {
 	(document.head||document.documentElement).appendChild(s);
 }
 
-//injectScript("jQuery.holdReady(true);debugger;", "debugger");
+window.addEventListener("message", function(event) {
+    // We only accept messages from ourselves
+    if (event.source != window) return;
+	if (!event.data.type) return;
+
+	var source = JSON.parse(event.source);
+
+	switch(source.type) {
+		case "getTabId":
+			chrome.extension.sendMessage({type: "getTabId"}, function(response) {
+				response.type = "tabId";
+				event.source.postMessage(JSON.stringify(response), event.origin);
+			});
+			break;
+	}
+});
+
 injectRequireJs(chrome.extension.getURL('core/inject/js/lib/require.js'), chrome.extension.getURL('core/inject/js/main'));

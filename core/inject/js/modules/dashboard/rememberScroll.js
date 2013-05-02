@@ -14,7 +14,6 @@ define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils', 'modules/
 	var DEBUG_DONT_NAVIGATE_AWAY = false;
 	var FIND_EXACT_POST_RETRY_COUNT = 8;
 	var Container = (function() {
-		var name;
 		var selector;
 		var $scrollContainer;
 		var pager;
@@ -43,15 +42,7 @@ define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils', 'modules/
 			args: {}
 		};
 
-		//Saved info
-		var savedPost = {
-			posts: [],
-			timestamp: 0,
-			pageNumber: 0
-		};
-
-		function RememberScroll(settingsName, postsContainerSelector, $scrollingContainer, containerPager) {
-			name = settingsName;
+		function RememberScroll(postsContainerSelector, $scrollingContainer, containerPager) {
 			selector = postsContainerSelector;
 			$scrollContainer = $scrollingContainer;
 			pager = containerPager;
@@ -62,7 +53,6 @@ define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils', 'modules/
 			searchForPost = _.bind(searchForPost, this);//Needed for trigger()
 			startNarrowingDownSearch = _.bind(startNarrowingDownSearch, this);//Needed for trigger();
 			binarySearchForTimestamp = _.bind(binarySearchForTimestamp, this);//Needed for trigger();
-
 		}
 
 		_.extend(RememberScroll.prototype, EventEmitter);
@@ -72,17 +62,11 @@ define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils', 'modules/
 		 */
 		RememberScroll.prototype.init = function() {
 			//Hook window leave and page load events
-			$(window).on('beforeunload', onLeavingPage);
 			pager.on('after', pageLoaded);
 
 			//Get the current page.
 			currentPage = decodePageNumber(pager.getNextPageUrl());
 			currentPage.pageNumber--;
-
-			//Load the last posts
-			var obj = Settings.get('last-scroll-' + name);
-			if(obj === null) return;
-			savedPost = obj;
 		}
 
 		/**
@@ -98,13 +82,6 @@ define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils', 'modules/
 		 */
 		RememberScroll.prototype.canResume = function() {
 			return (savedPost && savedPost.posts && savedPost.posts.length > 0 && savedPost.pageNumber >= 0 && savedPost.timestamp > 0);
-		}
-
-		/**
-		 * Save post ids, timestamp and page number.
-		 */
-		RememberScroll.prototype.save = function() {
-			Settings.set('last-scroll-' + name, savedPost);
 		}
 
 		/**
@@ -403,7 +380,7 @@ define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils', 'modules/
 		 * Turn /dashboard/2/6548899987 into base u	rl /dashboard/ and page number 2
 		 */
 		function decodePageNumber(pageUrl) {
-			var regx = /(\/[a-zA-Z0-9_]+\/)([0-9]+)\/*/;
+			var regx = /(\/[a-zA-Z0-9_]+\/)([0-9]+)\/*/;/*Fix for WebMatrix incorrect highlighting*/
 			var match = regx.exec(pageUrl);
 			if(match === null || match.length < 3)  return -1;
 

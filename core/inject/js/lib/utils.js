@@ -131,7 +131,7 @@ define(['logger'], function(Logger) {
 		}
 	 }
 
-	 var locale = {
+	var locale = {
 		"en": {
 			"daysLong": [
 				"Sunday",

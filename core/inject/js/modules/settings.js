@@ -6,13 +6,19 @@ define(['storage'], function(Storage) {
 	};
 
 	var prexifx = "inception-";
+	var cache = {};
 
-	function get(key) {
-		return Storage.get(prexifx + key);
+	function get(key, useCache) {
+		if(typeof(useCache) === 'undefined') useCache = true;
+		if(cache[key] && useCache) return cache[key];
+
+		var obj = Storage.get(prexifx + key);
+		cache[key] = obj;
+		return obj;
 	}
 
 	function set(key, val) {
-		Storage.set(prexifx + key, val);
+		cahce[key] = Storage.set(prexifx + key, val);
 	}
 
 	function all() {
@@ -34,26 +40,6 @@ define(['storage'], function(Storage) {
 	}
 
 	function defaults() {
-
-		set('hideHeaderOnScroll', {
-			enabled: true,
-			upwardScrollShowThreshold: 50
-		});
-
-		set('collapsableHeader', {
-			enabled: true,
-			showOnNotification: true,
-			hideDelay: 4000,
-			reshowDelay: 60 * 1000
-		});
-
-		set('newPostsColumn', {
-			enabled: true
-		});
-
-		set('collapsableRightColumn', {
-			enabled: true
-		});
 
 		set('rememberScroll', {
 			enabled: true
