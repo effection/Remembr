@@ -4,62 +4,6 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 
 	var Container = (function() 
 	{
-		function CreateAssociativeArray(withObject) {
-
-			var AssociativeArray = {};
-
-			Object.defineProperty(AssociativeArray, "length", {
-				value: 0,
-				enumerable: false,
-				writable : true,
-				configurable: false
-			});
-
-			Object.defineProperty(AssociativeArray, "add", {
-				value: function add(key, item) {
-					this[key] = item;
-					this.length++;
-				},
-				enumerable: false,
-				writable : false,
-				configurable: false
-			});
-
-			Object.defineProperty(AssociativeArray, "remove", {
-				value: function remove(key, item) {
-					if(this[key]) {
-						delete this[key];
-						this.length++;
-					}
-				},
-				enumerable: false,
-				writable : false,
-				configurable: false
-			});
-
-			Object.defineProperty(AssociativeArray, "getAtIndex", {
-				value: function getAtIndex(index) {
-					var i = 0;
-					for(var key in this) {
-						if(i == index) return this[key];
-						i++;
-					}
-					return null;
-				},
-				enumerable: false,
-				writable : false,
-				configurable: false
-			});
-
-			if(typeof(withObject) === 'object') {
-				AssociativeArray = _.extend(AssociativeArray, withObject);
-
-				AssociativeArray.length = Object.keys(withObject).length;
-			}
-
-			return AssociativeArray;
-		}
-
 		/**
 		 * Constructor
 		 * @param name String identifying what the posts are
@@ -99,9 +43,8 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 			//Add the button on load if we have post positions to remember
 			var allTabsPosts = this.loadAllTabsPosts();
 
-			if(allTabsPosts.length > 0) {
+			if(Object.keys(allTabsPosts).length > 0) {
 
-				var savedTabPostsRemoved = false;
 				//How long should we keep these other tabIds for?
 				for(var key in allTabsPosts) {
 					if(key == tabId) continue;
@@ -110,13 +53,8 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 					tab.numberOfChances--;
 					if(tab.numberOfChances <= 0) {
 						//Remove the tab
-						allTabsPosts.remove(key);
-						savedTabPostsRemoved = true;
+						this.removeTabPosts(key);
 					}
-				}
-
-				if(savedTabPostsRemoved) {
-					Settings.set('tabs-posts-kind-' + this.name, allTabsPosts);
 				}
 
 
@@ -218,22 +156,14 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 
 			var forceAllPosibilities = e.altKey;
 			var posibilities = this.getRememberedPostsForThisTab(forceAllPosibilities);
-			posibilities.add('TAB-2', posibilities['TAB-ID']);
-			posibilities.add('TAB-3', posibilities['TAB-ID']);
-			/*posibilities.add('TAB-4', posibilities['TAB-ID']);
-			posibilities.add('TAB-5', posibilities['TAB-ID']);
-			posibilities.add('TAB-6', posibilities['TAB-ID']);
-			posibilities.add('TAB-7', posibilities['TAB-ID']);*/
-			this.showPossibleSearchPositions(posibilities);
-			return;
 
-			if(posibilities.length === 1) {
+			if(posibilities.length > 1 || forceAllPosibilities) {
+				this.showPossibleSearchPositions(posibilities);
+			} else if(posibilities.length === 1) {
 				//Add this tab id for event identification
-				var possibility = posibilities.getAtIndex(0);
+				var possibility = posibilities[0];
 				possibility.tabId = this.tabId;
 				this.rememberScroll.startSearchFor(possibility);
-			} else if(posibilities.length > 1) {
-				this.showPossibleSearchPositions(posibilities);
 			} else {
 				alert("No posts to search for");
 			}
@@ -249,22 +179,29 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 				this.$springyMenu.springyMenu('destroy');
 			}
 
-			var lastButton = null;
-			for(var i = 0; i < posibleSearchPositions.length; i++) {
-				var possibility = posibleSearchPositions.getAtIndex(i);
-				lastButton = this.addPossibleSearchPositionButton(i + 1).click(_.bind(function() {
+			var $lastButton = null;
+			var i = 1;
+			for(var key in posibleSearchPositions) {
+				var possibility = posibleSearchPositions[key];
+
+				$lastButton = this.addPossibleSearchPositionButton(i).click(_.bind(function() {
 					//Add this tab id for event identification
 					possibility.tabId = this.tabId;
 					this.rememberScroll.startSearchFor(possibility);
 					this.$springyMenu.springyMenu('hide');
 				}, this));
+				i++;
 			}
 
 			//Add clear remembered positions button
-			this.addPossibleSearchPositionButton('x').click(_.bind(function() {
+			var $clearButton = this.addPossibleSearchPositionButton('x').click(_.bind(function() {
 				this.forgetAllSearchPositions();
 				this.$springyMenu.springyMenu('hide');
 			}, this));
+
+			if(Object.keys(posibleSearchPositions).length <= 0) {
+				$lastButton = $clearButton;
+			}
 
 			//Make sure notransition has been removed from the class
 			_.defer(_.bind(function() {
@@ -272,7 +209,7 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 					'radius'	 : 70.0,
 					'startAngle' : 145.0,
 					'angle'		 : 80.0
-					,'location'	 : {'left': lastButton.position().left, 'top':lastButton.position().top }
+					,'location'	 : {'left': $lastButton.position().left, 'top': $lastButton.position().top }
 				});
 
 				this.$springyMenu.springyMenu('show');
@@ -320,22 +257,26 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 
 			var tabPosts = allTabsPosts[this.tabId];
 			if(!tabPosts) return allTabsPosts; 
-		
-			var ascArray = CreateAssociativeArray();
-			ascArray.add(this.tabId, tabPosts);
-			return ascArray;
+
+			return [tabPosts];
 		}
 
 		/**
-		 * Remove entry for tabId.
+		 * Remove entry for tabId. Remove the remember button if no tabs left
 		 * @param tabId Id of tab.
 		 */
 		RememberScrollUI.prototype.removeTabPosts = function(tabId) {
 			//Remove the tab
-			var allTabs = this.getRememberedPostsForThisTab(true);
+			var allTabs = this.loadAllTabsPosts();
 			if(!allTabs[tabId]) return;
-			allTabs.remove(tabId);
+			delete allTabs[tabId];
 			Settings.set('tabs-posts-kind-' + this.name, allTabs);
+
+			//Remove button if needed
+			/*if(Object.keys(allTabs).length <= 0) {
+				this.$remembrButton.remove();
+			}*/
+
 			return allTabs;
 		}
 
@@ -346,9 +287,9 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 		RememberScrollUI.prototype.savePostsForTab = function(posts) {
 			if(!this.tabId) return false;
 
-			var allTabs = Settings.get('tabs-posts-kind-' + this.name, false);
-			allTabs = CreateAssociativeArray(allTabs);
-			allTabs.add(this.tabId, posts);
+			var allTabs = this.loadAllTabsPosts();
+
+			allTabs[this.tabId] = posts;
 
 			Settings.set('tabs-posts-kind-' + this.name, allTabs);
 			return true;
@@ -359,13 +300,9 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 		 */
 		RememberScrollUI.prototype.loadAllTabsPosts = function() {
 			//Don't use cache in case another page has changed the localStorage
-			var ascArray = CreateAssociativeArray();
 			var obj = Settings.get('tabs-posts-kind-' + this.name, false);
 			if(obj === null) obj = {};
-			for(var key in obj) {
-				ascArray.add(key, obj[key]);
-			}
-			return ascArray;
+			return obj;
 		}
 
 		/**
