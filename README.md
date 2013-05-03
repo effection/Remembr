@@ -22,3 +22,9 @@ How can I tell Remembr to forget all of lasts posts it has stored
 -------------------------------------------------------------------
 
 Alt+Click the Remembr button to show the list of possibilities and click the 'x' item in the list. This will ask you to confirm that you want to delete all remembered posts.
+
+
+Screenshot
+------------
+
+![Screenshot](psd/screenshot.png?raw=true)
