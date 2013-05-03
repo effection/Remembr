@@ -15,11 +15,10 @@ function injectRequireJs(url, main, load) {
 window.addEventListener("message", function(event) {
     // We only accept messages from ourselves
     if (event.source != window) return;
-	if (!event.data.type) return;
+	if (!event.data) return;
+	var data = JSON.parse(event.data);
 
-	var source = JSON.parse(event.source);
-
-	switch(source.type) {
+	switch(data.type) {
 		case "getTabId":
 			chrome.extension.sendMessage({type: "getTabId"}, function(response) {
 				response.type = "tabId";

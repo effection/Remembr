@@ -15,6 +15,11 @@
 		"http://www.tumblr.com/dashboard"
 	],
 
+	"background": {
+		"scripts": ["eventPage.js"],
+		"persistent": false
+	},
+
 	"content_scripts": [
 		{
 			"matches": ["http://www.tumblr.com/dashboard"],

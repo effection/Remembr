@@ -43,7 +43,7 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 			//Add the button on load if we have post positions to remember
 			var allTabsPosts = this.loadAllTabsPosts();
 
-			if(Object.keys(allTabsPosts).length > 0) {
+			//if(Object.keys(allTabsPosts).length > 0) {
 
 				//How long should we keep these other tabIds for?
 				for(var key in allTabsPosts) {
@@ -72,7 +72,7 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 				$imgText.on('click', _.bind(this.onRemembrButtonClicked, this));
 
 				this.$remembrButton = $button;
-			}
+			//}
 		}
 
 		/**
@@ -86,6 +86,9 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 		 * Store the current visible posts for this tab.
 		 */
 		RememberScrollUI.prototype.onPageNavigatingAway = function() {
+
+			if(this.$scrollingElement.scrollTop() <= 0) return;
+
 			//Find elementFromPoint coords for left_column posts
 			var offset = this.$postsContainer.offset();
 			var width = this.$postsContainer.width();
@@ -155,15 +158,29 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 			}
 
 			var forceAllPosibilities = e.altKey;
-			var posibilities = this.getRememberedPostsForThisTab(forceAllPosibilities);
+			var posibilities = [];
+			var hasOurTabId = false;
+			var ourTabsPosts = null;
 
-			if(posibilities.length > 1 || forceAllPosibilities) {
-				this.showPossibleSearchPositions(posibilities);
-			} else if(posibilities.length === 1) {
+			var allTabsPosts = this.loadAllTabsPosts();
+			if(forceAllPosibilities || this.tabId == null) 
+				posibilities = allTabsPosts;
+			else {
+				ourTabsPosts = allTabsPosts[this.tabId];
+				if(ourTabsPosts) {
+					hasOurTabId = true;
+					posibilities = [ourTabsPosts];
+				} 
+				else posibilities = allTabsPosts;
+			}
+
+			if(posibilities.length === 1 && hasOurTabId && !forceAllPosibilities) {
 				//Add this tab id for event identification
 				var possibility = posibilities[0];
 				possibility.tabId = this.tabId;
 				this.rememberScroll.startSearchFor(possibility);
+			} else if(posibilities.length > 1 || forceAllPosibilities || !hasOurTabId) {
+				this.showPossibleSearchPositions(posibilities);
 			} else {
 				alert("No posts to search for");
 			}
@@ -186,7 +203,7 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 
 				$lastButton = this.addPossibleSearchPositionButton(i).click(_.bind(function() {
 					//Add this tab id for event identification
-					possibility.tabId = this.tabId;
+					possibility.tabId = key;
 					this.rememberScroll.startSearchFor(possibility);
 					this.$springyMenu.springyMenu('hide');
 				}, this));

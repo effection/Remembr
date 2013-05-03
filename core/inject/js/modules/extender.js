@@ -8,6 +8,8 @@
 		init: init
 	};
 
+	var remembrInitd = false;
+
 	/**
 	 * Check for any surprises and start loading extensions
 	 */
@@ -53,8 +55,26 @@
 		
 			if(Settings.get('remembr-scroll').enabled) {
 				var r = new RememberScrollUI('dashboard-posts', $('#left_column  #posts'), $('body'), Tumblr.AutoPaginator);
-				r.init("TAB-ID");
-				Logger.info('Started remembr.');
+
+				window.addEventListener("message", function(event) {
+					// We only accept messages from ourselves
+					if (event.source != window) return;
+					if (!event.data) return;
+					var data = JSON.parse(event.data);
+
+					switch(data.type) {
+						case "tabId":
+							if(!data.id) break;
+							if(!remembrInitd) {
+								r.init(data.id.toString());
+								Logger.info('Started remembr.');
+								remembrInitd = true;
+							}
+							break;
+					}
+				});
+
+				window.postMessage(JSON.stringify({'type' : 'getTabId'}), '*');
 			}
 		}
 	}
