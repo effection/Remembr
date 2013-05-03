@@ -7,7 +7,8 @@
  *			start-search
  *			narrowing-search	{between: start, end}
  *			getting-post		{page}
- *			end-search			{success}
+ *			end-search			{success, tabId, [retrying]}
+ *			error				{code, message, tabId}
  */
 
 define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils'], function(Logger, $, _, EventEmitter, Utils) {
@@ -130,7 +131,7 @@ define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils'], function
 				//Check for error
 				if(!state.nearestPageFound && newPosts.length <= 0) {
 					state.isSearchingForPost = false;
-					this.trigger('error', {code: 1, message: 'No posts found'});
+					this.trigger('error', {code: 1, message: 'No posts found', tabId: postsToSearchFor.tabId});
 					return;
 				}
 
@@ -171,7 +172,7 @@ define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils'], function
 			if(state.tryToGoToExactPostRetries > 0 && tryToGoToExactPost()){
 				//Success
 				Logger.info('Found exact post');
-				this.trigger('end-search', {success: true});
+				this.trigger('end-search', {success: true, tabId: postsToSearchFor.tabId});
 				state.isSearchingForPost = false;
 			} else {
 				//Load next page for a limitted number of tries
@@ -180,7 +181,7 @@ define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils'], function
 				if(state.tryToGoToExactPostRetries <= 0) {
 					Logger.info('Failed to find exact post');
 						
-					this.trigger('end-search', {success: false, retrying: state.onFailStartFullSearch});
+					this.trigger('end-search', {success: false, retrying: state.onFailStartFullSearch, tabId: postsToSearchFor.tabId});
 
 					state.isSearchingForPost = false;
 

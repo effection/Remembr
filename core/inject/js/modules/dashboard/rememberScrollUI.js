@@ -1,5 +1,6 @@
 define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard/rememberScroll', 'lib/utils'], function(Logger, $, _, Settings, RememberScroll, Utils) {
 	var DEBUG_DONT_NAVIGATE_AWAY = false;
+	var NUMBER_OF_CHANCES = 2;
 
 	var Container = (function() 
 	{
@@ -100,6 +101,25 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 
 			if(allTabsPosts.length > 0) {
 
+				var savedTabPostsRemoved = false;
+				//How long should we keep these other tabIds for?
+				for(var key in allTabsPosts) {
+					if(key == tabId) continue;
+					var tab = allTabsPosts[key];
+
+					tab.numberOfChances--;
+					if(tab.numberOfChances <= 0) {
+						//Remove the tab
+						allTabsPosts.remove(key);
+						savedTabPostsRemoved = true;
+					}
+				}
+
+				if(savedTabPostsRemoved) {
+					Settings.set('tabs-posts-kind-' + this.name, allTabsPosts);
+				}
+
+
 				var $new_post = $('#new_post', this.$postsContainer);
 
 				var $button = $('<div>').addClass('remembr-container').attr('id', this.$postsContainer.attr('id') + '-remembr');
@@ -142,7 +162,9 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 				//Page number
 				pageNumber: 0,
 				//Time of post
-				timestamp: 0
+				timestamp: 0,
+				//Number of chances to open the previous position
+				numberOfChances: NUMBER_OF_CHANCES
 			};
 
 			for(var i = 10; i < height; i += 20) {
@@ -198,14 +220,18 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 			var posibilities = this.getRememberedPostsForThisTab(forceAllPosibilities);
 			posibilities.add('TAB-2', posibilities['TAB-ID']);
 			posibilities.add('TAB-3', posibilities['TAB-ID']);
+			/*posibilities.add('TAB-4', posibilities['TAB-ID']);
+			posibilities.add('TAB-5', posibilities['TAB-ID']);
+			posibilities.add('TAB-6', posibilities['TAB-ID']);
+			posibilities.add('TAB-7', posibilities['TAB-ID']);*/
 			this.showPossibleSearchPositions(posibilities);
 			return;
 
 			if(posibilities.length === 1) {
-				//Start searching for these posts
-				for(var i in posibilities.getAtIndex(0))
-					Logger.debug(i);
-				this.rememberScroll.startSearchFor(posibilities.getAtIndex(0));
+				//Add this tab id for event identification
+				var possibility = posibilities.getAtIndex(0);
+				possibility.tabId = this.tabId;
+				this.rememberScroll.startSearchFor(possibility);
 			} else if(posibilities.length > 1) {
 				this.showPossibleSearchPositions(posibilities);
 			} else {
@@ -223,14 +249,22 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 				this.$springyMenu.springyMenu('destroy');
 			}
 
-			var maxItemWidth
 			var lastButton = null;
 			for(var i = 0; i < posibleSearchPositions.length; i++) {
-				//var possibility = posibleSearchPositions.getAtIndex(i);
-				lastButton = this.addPossibleSearchPositionButton(i);
+				var possibility = posibleSearchPositions.getAtIndex(i);
+				lastButton = this.addPossibleSearchPositionButton(i + 1).click(_.bind(function() {
+					//Add this tab id for event identification
+					possibility.tabId = this.tabId;
+					this.rememberScroll.startSearchFor(possibility);
+					this.$springyMenu.springyMenu('hide');
+				}, this));
 			}
 
 			//Add clear remembered positions button
+			this.addPossibleSearchPositionButton('x').click(_.bind(function() {
+				this.forgetAllSearchPositions();
+				this.$springyMenu.springyMenu('hide');
+			}, this));
 
 			//Make sure notransition has been removed from the class
 			_.defer(_.bind(function() {
@@ -249,9 +283,9 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 		 * Add the button at the correct distance and angle from the Remembr button.
 		 * @param index Current index out of posibilities.
 		 */
-		RememberScrollUI.prototype.addPossibleSearchPositionButton = function(index) {
+		RememberScrollUI.prototype.addPossibleSearchPositionButton = function(value) {
 			var $springyMenuContainer = $('.springy-menu', this.$remembrButton);
-			var $button = $('<div>').css('display','none').addClass('item').addClass('notransition').text(index + 1);
+			var $button = $('<div>').css('display','none').addClass('item').addClass('notransition').text(value);
 			$springyMenuContainer.append($button);
 
 			$button.css('left', $springyMenuContainer.width() / 2 - $button.width() / 2);
@@ -260,6 +294,18 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 			_.defer(function(){ $button.css('display','block').removeClass('notransition'); });
 		
 			return $button;
+		}
+
+		/**
+		 * Show confirmation and then delete all stored search positions
+		 */
+		RememberScrollUI.prototype.forgetAllSearchPositions = function() {
+			if(confirm('Are you sure you want to forget all remembered posts?')) {
+				Settings.set('tabs-posts-kind-' + this.name, {});
+				return true;
+			}
+
+			return false;
 		}
 
 
@@ -278,6 +324,19 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 			var ascArray = CreateAssociativeArray();
 			ascArray.add(this.tabId, tabPosts);
 			return ascArray;
+		}
+
+		/**
+		 * Remove entry for tabId.
+		 * @param tabId Id of tab.
+		 */
+		RememberScrollUI.prototype.removeTabPosts = function(tabId) {
+			//Remove the tab
+			var allTabs = this.getRememberedPostsForThisTab(true);
+			if(!allTabs[tabId]) return;
+			allTabs.remove(tabId);
+			Settings.set('tabs-posts-kind-' + this.name, allTabs);
+			return allTabs;
 		}
 
 		/**
@@ -341,11 +400,16 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 		function onEndSearch(info){
 			$('.remembr-arrow',  this.$remembrButton).removeClass('remembr-searching');
 			$('.post:not(:first)',  this.$postsContainer).css('opacity', '1.0');
+
 			if(info.success) {
-			
+				//Remove tabId from posts
+				this.removeTabPosts(info.tabId)
 			} else {
-				this.$remembrButton.show();
-				alert('Couldn\'t find the post');
+				if(info.retrying) {
+					Logger.info('Retrying search from start');
+				} else {
+					alert('Couldn\'t find the post');
+				}
 			}
 		}
 
