@@ -2,8 +2,8 @@
  * Main loader for extensions based on settings. Assumes injector has been called to tidy up things.
  */
 
- define(['logger', 'underscore', 'modules/settings', 'modules/injector', 'modules/dashboard/paginatorFactory', 'modules/dashboard/rememberScrollUI'], 
- function (Logger, _, Settings, Injector, PaginatorFactory, RememberScrollUI) {
+ define(['logger', 'underscore', 'jquery', 'modules/settings', 'modules/injector', 'modules/dashboard/paginatorFactory', 'modules/dashboard/rememberScrollUI'], 
+ function (Logger, _, $, Settings, Injector, PaginatorFactory, RememberScrollUI) {
 	var module = {
 		init: init
 	};

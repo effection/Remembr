@@ -44,7 +44,6 @@ define(['jquery'], function($) {
 				var y = settings.radius * Math.sin(rad);
 
 				var initialPosition = $($menuItems[index]).position();
-				console.log(initialPosition);
 
 				var animateTo = {
 					left: initialPosition.left + x, 

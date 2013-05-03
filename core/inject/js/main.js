@@ -5,6 +5,7 @@ require.config({
 	waitSeconds: 200,
 	paths: {
 		'jquery': 'lib/jquery',
+		'tumblrsJquery' : 'tumblr/jquery',
 		'logger': 'lib/logger',
 		'underscore' : 'tumblr/underscore',
 		'eventEmitter' : 'tumblr/backbone',

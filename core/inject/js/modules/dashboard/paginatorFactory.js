@@ -2,7 +2,7 @@
  * AutoPaginator
  */
 
-define([], function() {
+define(['jquery'], function($) {
 	var factory = {
 		createAutoPaginator: createAutoPaginator,
 		createNormalPager: createNormalPager

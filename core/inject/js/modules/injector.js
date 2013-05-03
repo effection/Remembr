@@ -2,7 +2,7 @@
  * Add extra classes to Tumblr for easy use, read out the settings and hook any useful javascript.
  */
 
-define(['logger', 'jquery', 'lib/springyMenu', 'tumblr', 'underscore', 'eventEmitter'], function (Logger, $, SpringyMenu, Tumblr, _, EventEmitter) {
+define(['logger', 'jquery', 'tumblrsJquery', 'lib/springyMenu', 'tumblr', 'underscore', 'eventEmitter'], function (Logger, $, $_Tumblr, SpringyMenu, Tumblr, _, EventEmitter) {
 
 	var module = {
 		init: init,
