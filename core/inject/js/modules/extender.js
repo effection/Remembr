@@ -47,12 +47,12 @@
 			Logger.debug('Stopping pager');
 			Tumblr.AutoPaginator.stop();
 			Logger.debug('Creating new pager');
-			Tumblr.AutoPaginator = PaginatorFactory.createAutoPaginator($('body'), '/dashboard/2');
+			Tumblr.AutoPaginator = PaginatorFactory.createAutoPaginator($('#left_column #posts'), $('body'), '/dashboard/2');
 			Tumblr.AutoPaginator.start();
 			Logger.debug('Started new pager');
 		
 			if(Settings.get('remembr-scroll').enabled) {
-				var r = new RememberScrollUI('dashboard-posts', $('#left_column'), $('body'), Tumblr.AutoPaginator);
+				var r = new RememberScrollUI('dashboard-posts', $('#left_column  #posts'), $('body'), Tumblr.AutoPaginator);
 				r.init("TAB-ID");
 				Logger.info('Started remembr.');
 			}

@@ -8,12 +8,12 @@ define(['jquery'], function($) {
 		createNormalPager: createNormalPager
 	};
 
-	function createAutoPaginator($scrollContainer, startPage) {
-		return new AutoPaginatorContainer($scrollContainer, startPage);
+	function createAutoPaginator($postsContainer, $scollingElement, startPage) {
+		return new AutoPaginatorContainer($postsContainer, $scollingElement, startPage);
 	}
 
-	function createNormalPager($scrollContainer, startPage) {
-		return new NormalPageContainer($scrollContainer, startPage);
+	function createNormalPager($scollingElement, startPage) {
+		return new NormalPageContainer($scollingElement, startPage);
 	}
 
 	/**
@@ -21,7 +21,7 @@ define(['jquery'], function($) {
 	 * 
 	 * exports should be an empty object so the paginator isn't a static global instance
 	 */
-	function AutoPaginatorContainer($scrollContainer, startPage) {
+	function AutoPaginatorContainer($postsContainer, $scollingElement, startPage) {
 		var AutoPaginator = {
 			start: function () {
 				retries = 3;
@@ -99,8 +99,8 @@ define(['jquery'], function($) {
 			if (typeof el === 'undefined' || el === null)
 				return false;
 			var top = $(el).position().top;
-			var scroll = $scrollContainer.scrollTop();
-			var viewport_height = $scrollContainer.height();
+			var scroll = $scollingElement.scrollTop();
+			var viewport_height = $scollingElement.height();
 			/*
 			var top = el.offsetTop;
 			var scroll = window.pageYOffset || (document.documentElement && document.documentElement.scrollTop) || document.body.scrollTop;
@@ -121,7 +121,7 @@ define(['jquery'], function($) {
 				return
 			}
 			var posts;
-			if (next_page && !loading_next_page && (posts = $('.inception-posts > .post', $scrollContainer)/*$('#posts > .post')*/) && posts.length > 0 && (((posts.length >= 3) && in_viewport(posts[posts.length - 4])) || ((posts.length < 3) && in_viewport(posts[posts.length - 1])))) {
+			if (next_page && !loading_next_page && (posts = $('.post', $postsContainer)/*$('#posts > .post')*/) && posts.length > 0 && (((posts.length >= 3) && in_viewport(posts[posts.length - 4])) || ((posts.length < 3) && in_viewport(posts[posts.length - 1])))) {
 				loading_next_page = true;
 				_before_auto_pagination();
 				AutoPaginator.trigger("before", next_page);
@@ -172,7 +172,7 @@ define(['jquery'], function($) {
 			}
 
 			if(addToPosts)
-				$('.inception-posts', $scrollContainer).append(new_posts);
+				$postsContainer.append(new_posts);
 
 			track();
 			loading_next_page = false;
@@ -255,7 +255,7 @@ define(['jquery'], function($) {
 		return AutoPaginator;
 	};
 
-	function NormalPageContainer($scrollContainer, startPage) {
+	function NormalPageContainer($scollingElement, startPage) {
 		var NormalPages = {
 			start: function () {
 				

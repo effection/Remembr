@@ -323,7 +323,8 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 		function onStartSearch() {
 			$('.remembr-arrow', this.$remembrButton).addClass('remembr-searching');
 			$('.post:not(:first)', this.$postsContainer).css('opacity', '0.4');
-			//TODO Disable interaction/scrolling
+			//Disable interaction/scrolling
+			$('body').css('overflow', 'hidden');
 		}
 
 		function onNarrowingSearch(info) {
@@ -337,6 +338,8 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 		function onEndSearch(info){
 			$('.remembr-arrow',  this.$remembrButton).removeClass('remembr-searching');
 			$('.post:not(:first)',  this.$postsContainer).css('opacity', '1.0');
+			//Restore interaction/scrolling
+			$('body').css('overflow', 'visible');
 
 			if(info.success) {
 				//Remove tabId from posts

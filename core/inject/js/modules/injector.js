@@ -44,12 +44,12 @@ define(['logger', 'jquery', 'tumblrsJquery', 'lib/springyMenu', 'tumblr', 'under
      *Add classes to a few objects for styling / ease
      */
     function addExtraClasses() {
-        $('body').addClass('inception');
-        $('#left_column').addClass('post-column').attr('tabindex', '-1');
-        $('#left_column #posts').addClass('inception-posts');
+		module.numHtmlSurprises = 0;
+        $('body').addClass('remembr');
 
 		//Do a check to see if any of the major html has changed indicating the plugin probably isn't going to work
-		module.numHtmlSurprises = 0;
+		if($('#left_column').length < 1) module.numHtmlSurprises++;
+		if($('#new_post').length < 1) module.numHtmlSurprises++;
     }
 
     /**
@@ -64,11 +64,6 @@ define(['logger', 'jquery', 'tumblrsJquery', 'lib/springyMenu', 'tumblr', 'under
 
 		if(!Tumblr.auto_paginate) module.numJsSurprises++
 		module.settings.autoPaginate = Tumblr.auto_paginate || false;
-
-		if(!Tumblr.enable_dashboard_key_commands) module.numJsSurprises++
-		module.settings.enableDashboardKeyCommands = Tumblr.enable_dashboard_key_commands || false;
-
-		//SearchAutoPager
     }
 
 	/**
@@ -135,6 +130,7 @@ define(['logger', 'jquery', 'tumblrsJquery', 'lib/springyMenu', 'tumblr', 'under
 		} else 
 			$container = $('<div id="inception-alert"></div>');
 
+		html = '<div class="logo"></div>' + html;
 		$container.append(html);
 		$container.append('<div style="float: right; padding: 4px 10px; font-size: 12px;"><a class="close-alert" href="#">close</a></div>');
 
