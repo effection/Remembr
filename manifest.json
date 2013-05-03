@@ -29,6 +29,7 @@
   
 	"web_accessible_resources": [
 		"core/img/*",
+		"core/font/*",
 		"core/inject/*",
 		"browser/js/storage.js"
 	]

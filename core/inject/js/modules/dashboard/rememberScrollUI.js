@@ -1,5 +1,5 @@
 define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard/rememberScroll', 'lib/utils'], function(Logger, $, _, Settings, RememberScroll, Utils) {
-	var DEBUG_DONT_NAVIGATE_AWAY = true;
+	var DEBUG_DONT_NAVIGATE_AWAY = false;
 
 	var Container = (function() 
 	{
@@ -109,6 +109,8 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 				$button.append($imgText).append($arrow);
 				$new_post.append($button);
 
+				$button.append($('<div style="width: 120px; height: 120px;">').addClass('springy-menu'));
+
 				$imgText.on('click', _.bind(this.onRemembrButtonClicked, this));
 
 				this.$remembrButton = $button;
@@ -186,8 +188,18 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 		 * Button click event handler.
 		 */
 		RememberScrollUI.prototype.onRemembrButtonClicked = function(e) {
+
+			if(this.$springyMenu && this.$springyMenu.springyMenu('isVisible')) {
+				this.$springyMenu && this.$springyMenu.springyMenu('hide');
+				return;
+			}
+
 			var forceAllPosibilities = e.altKey;
 			var posibilities = this.getRememberedPostsForThisTab(forceAllPosibilities);
+			posibilities.add('TAB-2', posibilities['TAB-ID']);
+			posibilities.add('TAB-3', posibilities['TAB-ID']);
+			this.showPossibleSearchPositions(posibilities);
+			return;
 
 			if(posibilities.length === 1) {
 				//Start searching for these posts
@@ -206,21 +218,48 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 		 * @param possibleSearchPositions Array of all possibilities.
 		 */
 		RememberScrollUI.prototype.showPossibleSearchPositions = function(posibleSearchPositions) {
+			$('.springy-menu', this.$remembrButton).empty();
+			if(this.$springyMenu) {
+				this.$springyMenu.springyMenu('destroy');
+			}
+
+			var maxItemWidth
+			var lastButton = null;
 			for(var i = 0; i < posibleSearchPositions.length; i++) {
 				//var possibility = posibleSearchPositions.getAtIndex(i);
-				this.addPossibleSearchPositionButton(i, posibleSearchPositions.length);
+				lastButton = this.addPossibleSearchPositionButton(i);
 			}
 
 			//Add clear remembered positions button
+
+			//Make sure notransition has been removed from the class
+			_.defer(_.bind(function() {
+				this.$springyMenu = $('.springy-menu', this.$remembrButton).springyMenu({
+					'radius'	 : 70.0,
+					'startAngle' : 145.0,
+					'angle'		 : 80.0
+					,'location'	 : {'left': lastButton.position().left, 'top':lastButton.position().top }
+				});
+
+				this.$springyMenu.springyMenu('show');
+			}, this));
 		}
 
 		/**
 		 * Add the button at the correct distance and angle from the Remembr button.
 		 * @param index Current index out of posibilities.
-		 * @param maxButtons Maximum number of buttons to calculate the angles.
 		 */
-		RememberScrollUI.prototype.addPossibleSearchPositionButton = function(index, maxButtons) {
+		RememberScrollUI.prototype.addPossibleSearchPositionButton = function(index) {
+			var $springyMenuContainer = $('.springy-menu', this.$remembrButton);
+			var $button = $('<div>').css('display','none').addClass('item').addClass('notransition').text(index + 1);
+			$springyMenuContainer.append($button);
+
+			$button.css('left', $springyMenuContainer.width() / 2 - $button.width() / 2);
+			$button.css('top', $springyMenuContainer.height() / 2 - $button.height() / 2);
+
+			_.defer(function(){ $button.css('display','block').removeClass('notransition'); });
 		
+			return $button;
 		}
 
 

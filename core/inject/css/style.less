@@ -3,9 +3,14 @@
  */
 @import "prefixer.less";
 
+@font-face {
+    font-family: DicisHandwritting;
+    src: url("chrome-extension://__MSG_@@extension_id__/core/font/Dici's Handwrite.ttf"); 
+}
+
 #inception-alert {
     position: fixed;
-	top: 0;
+    top: 0;
 	left: 0;
 	right: 0;
 	padding:  10px;
@@ -84,5 +89,53 @@
         0% {-webkit-transform: rotate(0deg);}
         50% {-webkit-transform: rotate(-180deg);}
         100% {-webkit-transform: rotate(-360deg);}
+    }
+}
+
+.springy-menu {
+    position: relative;
+    
+    .notransition {
+        -webkit-transition: none !important;
+        -moz-transition: none !important;
+        -o-transition: none !important;
+        -ms-transition: none !important;
+        transition: none !important;
+    }
+    
+    .item {
+        position: absolute;
+        
+        width:40px;
+        height:40px;
+        
+        text-align: center;
+        color:#77828d;
+        font-size: 30px;
+        font-family: DicisHandwritting;
+        cursor: pointer;
+        
+        .transition-duration(1000ms);
+        .transition-timing-function(cubic-bezier(0.68, -0.55, 0.265, 1.55));
+        -webkit-transition-property:-webkit-transform,left,top,opacity,z-index,visibility;
+        -moz-transition-property:-moz-transform,left,top,opacity,z-index,visibility;
+        -o-transition-property:-o-transform,left,top,opacity,z-index,visibility;
+        -ms-transition-property:-ms-transform,left,top,opacity,z-index,visibility;
+        transition-property:transform,left,top,opacity,z-index,visibility;
+        
+        &:hover {
+            color:#ab7dc2;
+            //.transform(scale(1.2));
+        }
+        
+        &.show-menu-item {
+            .transform(rotate(360deg));
+            visibility: visible;
+        }
+
+        &.hide-menu-item {
+            .transform(rotate(-360deg));
+            visibility: hidden;
+        }
     }
 }
