@@ -51,6 +51,8 @@ define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils'], function
 			startNarrowingDownSearch = _.bind(startNarrowingDownSearch, this);//Needed for trigger(); this.currentPage
 			binarySearchForTimestamp = _.bind(binarySearchForTimestamp, this);//Needed for trigger();
 			getPagesUntilPastTimestamp = _.bind(getPagesUntilPastTimestamp, this);//Needed for this.currentPage
+
+			this.showingFromPageNumber = 1;
 		}
 
 		_.extend(RememberScroll.prototype, EventEmitter);
@@ -189,6 +191,8 @@ define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils'], function
 						this.startSearchFor();
 					}
 				} else {
+					this.showingFromPageNumber = this.currentPage.pageNumber + 1;
+
 					pager.setNextPageToLoad(nextPageUrl(this.currentPage.pageNumber + 1), function() {
 						pager.loadNextPage(true);
 					});
@@ -240,8 +244,11 @@ define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils'], function
 				//Emit event for final stage to update UI
 				this.trigger('getting-post', {page: maxPageNumber});
 
+				//Account for deleted posts, so pull page number back 1 (gives room for 10 deletions in timeline)
+				this.showingFromPageNumber = (maxPageNumber > 1 ? maxPageNumber - 1 : 0);
+
 				//Load this page into the container
-				pager.setNextPageToLoad(nextPageUrl((maxPageNumber > FIND_EXACT_POST_RETRY_COUNT/2 ? maxPageNumber - FIND_EXACT_POST_RETRY_COUNT/2 : 1)), function() {
+				pager.setNextPageToLoad(nextPageUrl(this.showingFromPageNumber), function() {
 					state.nearestPageFound = true;
 					pager.loadNextPage(true);
 				});
@@ -288,7 +295,7 @@ define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils'], function
 		function tryToGoToExactPost() {
 			var $container = $(selector);
 			for(var i = 0; i < postsToSearchFor.posts.length; i++) {
-				var $post = $('li[data-post-id="' + postsToSearchFor.posts[i] + '"]', $container);
+				var $post = $('div[data-post-id="' + postsToSearchFor.posts[i] + '"]', $container);
 				if($post.length > 0) {
 
 					$scrollContainer.animate({
@@ -305,7 +312,7 @@ define(['logger', 'jquery', 'underscore', 'eventEmitter', 'lib/utils'], function
 		 */
 		function getTimestampForPost($post) {
 			//Annoyingly formatted timestamp is in the little corner permalink "View post - [Today, Wednesday,...] 06:30am"
-			var permalink = $('a.permalink:first', $post);
+			var permalink = $('a.post_permalink:first', $post);
 			var crapTimestamp = permalink.attr('title').replace(/^.* \- /,'');//Test for /.* \- (.*)/
 			var timestamp = Utils.getTimestampFromTumblrsAnnoyingFormat(crapTimestamp);
 			return timestamp;

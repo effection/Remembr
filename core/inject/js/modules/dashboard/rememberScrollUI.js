@@ -27,6 +27,8 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 			this.tabId = null;
 			this.$remembrButton = null;
 			this.possibilitiesButtons = [];
+			//Track which page number was first loaded into the html
+			this.postsStartAtPageNumber = 0;
 		}
 
 		/**
@@ -54,6 +56,9 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 					if(tab.numberOfChances <= 0) {
 						//Remove the tab
 						this.removeTabPosts(key);
+					}else {
+						//Save the changed number of chances
+						this.savePostsForTab(tab, key);
 					}
 				}
 
@@ -138,7 +143,9 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 					} else break;
 				}
 				//Doesn't have to be accurate we'll be starting search a page or 2 before the saved page in case posts were deleted
-				savedPosts.pageNumber = (this.rememberScroll.currentPage.pageNumber > 2 ? this.rememberScroll.currentPage.pageNumber - 2 : 1);
+				savedPosts.pageNumber = this.rememberScroll.showingFromPageNumber + Math.floor($foundPosts[0].parent().prevAll().length / 10);//Tumblr always loads 10 posts per page
+				savedPosts.pageNumber = (savedPosts.pageNumber < 1? 1: savedPosts.pageNumber);
+				//savedPosts.pageNumber = (this.rememberScroll.currentPage.pageNumber > 2 ? this.rememberScroll.currentPage.pageNumber - 2 : 1);
 				savedPosts.timestamp = postTimestamp;
 				this.savePostsForTab(savedPosts);
 			}
@@ -279,7 +286,7 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 		}
 
 		/**
-		 * Remove entry for tabId. Remove the remember button if no tabs left
+		 * Remove entry for tabId.
 		 * @param tabId Id of tab.
 		 */
 		RememberScrollUI.prototype.removeTabPosts = function(tabId) {
@@ -301,12 +308,15 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 		 * Save posts for tabId. TODO Settings locking
 		 * @param Posts Array of post information to help find the post in the future.
 		 */
-		RememberScrollUI.prototype.savePostsForTab = function(posts) {
-			if(!this.tabId) return false;
+		RememberScrollUI.prototype.savePostsForTab = function(posts, tabId) {
+			if(tabId == null) {
+				if(!this.tabId) return false;
+				else tabId = this.tabId;
+			}
 
 			var allTabs = this.loadAllTabsPosts();
 
-			allTabs[this.tabId] = posts;
+			allTabs[tabId] = posts;
 
 			Settings.set('tabs-posts-kind-' + this.name, allTabs);
 			return true;
@@ -327,7 +337,7 @@ define(['logger', 'jquery', 'underscore', 'modules/settings', 'modules/dashboard
 		 */
 		function getTimestampForPost($post) {
 			//Annoyingly formatted timestamp is in the little corner permalink "View post - [Today, Wednesday,...] 06:30am"
-			var permalink = $('a.permalink:first', $post);
+			var permalink = $('a.post_permalink:first', $post);
 			var crapTimestamp = permalink.attr('title').replace(/^.* \- /,'');//Test for /.* \- (.*)/
 			var timestamp = Utils.getTimestampFromTumblrsAnnoyingFormat(crapTimestamp);
 			return timestamp;

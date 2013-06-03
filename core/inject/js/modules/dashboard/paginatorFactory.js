@@ -91,7 +91,7 @@ define(['jquery'], function($) {
 		var retries = 3;
 		var loading_next_page = false;
 		var next_page = startPage;
-		var shouldAdd
+		//var shouldAdd
 		/**
 		 * Is the post shown on screen.
 		 */

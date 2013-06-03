@@ -3,6 +3,8 @@ Remembr
 
 Remembers the last viewed post on your Tumblr dashboard in case you accidentally navigate away
 
+![Screenshot](psd/screenshot.png?raw=true)
+
 What do I do if I've accidentally clicked a link and want to go back to where I was?
 --------------------------------------------------------------------------------------
 
@@ -24,7 +26,3 @@ How can I tell Remembr to forget all of lasts posts it has stored
 Alt+Click the Remembr button to show the list of possibilities and click the 'x' item in the list. This will ask you to confirm that you want to delete all remembered posts.
 
 
-Screenshot
-------------
-
-![Screenshot](psd/screenshot.png?raw=true)
